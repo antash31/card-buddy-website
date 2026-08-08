@@ -36,8 +36,40 @@
   outline: none;
 }
 
+/* Swapping the field replays this on the icon and text, so steps cross fade
+   along the arc instead of jumping. */
+.curved-input__content {
+  animation: ci-swap-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.curved-input__button-label {
+  animation: ci-label-in 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes ci-swap-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--ci-swap-x, 14px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ci-label-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .curved-input__button-bg {
+  /* `d` is animatable where supported and simply snaps where it is not. */
   transition:
+    d 0.42s cubic-bezier(0.16, 1, 0.3, 1),
     filter 0.2s ease,
     opacity 0.2s ease;
 }
@@ -52,6 +84,17 @@
 
 .curved-input__button:focus-visible .curved-input__button-bg {
   filter: brightness(1.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .curved-input__content,
+  .curved-input__button-label {
+    animation: none;
+  }
+
+  .curved-input__button-bg {
+    transition: filter 0.2s ease;
+  }
 }
 
 .curved-input__field {

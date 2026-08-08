@@ -4,6 +4,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CurvedInput from "./CurvedInput";
+import { StepIcon } from "./WaitlistIcons";
 
 const ART = "/hero-hands.png";
 const ART_SIZES =
@@ -11,17 +12,61 @@ const ART_SIZES =
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const STATUS_MESSAGE = {
-  idle: "Works with 400+ cards · No card numbers stored",
-  error: "That email looks off. Check it and try again.",
-  done: "You are on the list. Your invite lands in your inbox soon.",
-};
+// One curved bar, asked three times. Keeping it to a single field at a time
+// is what lets the hero stay inside one viewport.
+const STEPS = [
+  {
+    key: "name",
+    type: "text",
+    label: "Your name",
+    placeholder: "Your name",
+    placeholderWide: "Your full name",
+    button: "Next",
+    buttonWide: "Continue",
+    hint: "First up, what should we call you?",
+    error: "Enter your name so we can greet you properly.",
+    isValid: (v) => v.trim().length >= 2,
+  },
+  {
+    key: "email",
+    type: "email",
+    label: "Your email",
+    placeholder: "Your email",
+    placeholderWide: "you@yourmail.com",
+    button: "Next",
+    buttonWide: "Continue",
+    hint: "Where should we send your invite?",
+    error: "That email looks off. Check it and try again.",
+    isValid: (v) => EMAIL_PATTERN.test(v.trim()),
+  },
+  {
+    key: "phone",
+    type: "tel",
+    label: "Your number",
+    placeholder: "Your number",
+    placeholderWide: "+91 98765 43210",
+    button: "Join",
+    buttonWide: "Join waitlist",
+    hint: "Last one. We text you the moment your invite is live.",
+    error: "That number does not look right. Try again.",
+    isValid: (v) => {
+      const digits = v.replace(/\D/g, "");
+      return digits.length >= 7 && digits.length <= 15;
+    },
+  },
+];
 
 export default function Hero() {
   const stageRef = useRef(null);
-  const [email, setEmail] = useState("");
+  const waitlistRef = useRef(null);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [answers, setAnswers] = useState({ name: "", email: "", phone: "" });
   const [status, setStatus] = useState("idle");
+  const [joined, setJoined] = useState(false);
+  const [swapFrom, setSwapFrom] = useState("right");
   const [isWide, setIsWide] = useState(false);
+
+  const step = STEPS[stepIndex];
 
   // The curved bar is drawn at real pixel sizes, so its proportions are set
   // per breakpoint rather than by CSS.
@@ -51,14 +96,58 @@ export default function Hero() {
     stage.style.setProperty("--my", "0");
   }, []);
 
-  const handleEmailChange = useCallback((next) => {
-    setEmail(next);
-    setStatus("idle");
+  // CurvedInput keeps its own hidden field, so after advancing a step we hand
+  // focus back to it rather than making the visitor tap the bar again.
+  const focusField = useCallback(() => {
+    waitlistRef.current?.querySelector(".curved-input__field")?.focus();
   }, []);
 
-  const handleJoin = useCallback((next) => {
-    setStatus(EMAIL_PATTERN.test(next.trim()) ? "done" : "error");
-  }, []);
+  const handleAnswerChange = useCallback(
+    (next) => {
+      setAnswers((prev) => ({ ...prev, [step.key]: next }));
+      setStatus("idle");
+    },
+    [step.key],
+  );
+
+  const handleStepSubmit = useCallback(
+    (next) => {
+      if (!step.isValid(next)) {
+        setStatus("error");
+        return;
+      }
+
+      setStatus("idle");
+      setSwapFrom("right");
+
+      if (stepIndex < STEPS.length - 1) {
+        setStepIndex(stepIndex + 1);
+        requestAnimationFrame(focusField);
+        return;
+      }
+
+      setJoined(true);
+    },
+    [focusField, step, stepIndex],
+  );
+
+  const handleStepBack = useCallback(
+    (index) => {
+      if (joined || index >= stepIndex) return;
+      setSwapFrom("left");
+      setStepIndex(index);
+      setStatus("idle");
+      requestAnimationFrame(focusField);
+    },
+    [focusField, joined, stepIndex],
+  );
+
+  const firstName = answers.name.trim().split(/\s+/)[0];
+  const statusMessage = joined
+    ? `You are on the list${firstName ? `, ${firstName}` : ""}. Watch your inbox.`
+    : status === "error"
+      ? step.error
+      : step.hint;
 
   return (
     <section
@@ -102,20 +191,40 @@ export default function Hero() {
 
         <div
           id="waitlist"
+          ref={waitlistRef}
           className="rise rise-4 flex w-full max-w-[470px] flex-col items-center"
         >
           {/* Height is reserved so the artwork does not jump when the curved
               bar measures itself on mount. */}
-          <div className="flex min-h-[85px] w-full justify-center sm:min-h-[104px]">
+          <div
+            className={`flex min-h-[85px] w-full justify-center sm:min-h-[104px] ${
+              joined ? "pointer-events-none" : ""
+            }`}
+          >
             <CurvedInput
-              value={email}
-              onChange={handleEmailChange}
-              onSubmit={handleJoin}
-              name="email"
-              type="email"
-              ariaLabel="Email address for the Card Buddy waitlist"
-              placeholder={isWide ? "you@yourmail.com" : "Your email"}
-              buttonText={isWide ? "Join waitlist" : "Join"}
+              value={joined ? "" : answers[step.key]}
+              onChange={handleAnswerChange}
+              onSubmit={handleStepSubmit}
+              name={step.key}
+              type={joined ? "text" : step.type}
+              ariaLabel={`${step.label} for the Card Buddy waitlist`}
+              placeholder={
+                joined
+                  ? `Welcome aboard${firstName ? `, ${firstName}` : ""}`
+                  : isWide
+                    ? step.placeholderWide
+                    : step.placeholder
+              }
+              buttonText={isWide ? step.buttonWide : step.button}
+              showButton={!joined}
+              contentKey={joined ? "done" : step.key}
+              swapFrom={swapFrom}
+              icon={
+                <StepIcon
+                  step={joined ? "done" : step.key}
+                  barHeight={isWide ? 64 : 56}
+                />
+              }
               width={470}
               bend={isWide ? 26 : 15}
               height={isWide ? 64 : 56}
@@ -123,7 +232,7 @@ export default function Hero() {
               fontSize={isWide ? 16 : 15}
               backgroundColor="#f8ead6"
               textColor="#3d0206"
-              placeholderColor="#a1736a"
+              placeholderColor={joined ? "#3d0206" : "#a1736a"}
               borderColor="#e0c39c"
               buttonColor="#c01018"
               buttonTextColor="#f8ead6"
@@ -133,17 +242,46 @@ export default function Hero() {
             />
           </div>
 
+          {!joined && (
+            <div className="mt-3 flex items-center gap-2 sm:mt-4">
+              {STEPS.map((entry, index) => {
+                const reachable = index < stepIndex;
+                return (
+                  <button
+                    key={entry.key}
+                    type="button"
+                    onClick={() => handleStepBack(index)}
+                    disabled={!reachable}
+                    aria-label={
+                      reachable ? `Back to ${entry.label}` : entry.label
+                    }
+                    aria-current={index === stepIndex ? "step" : undefined}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      index === stepIndex
+                        ? "w-6 bg-cream/80"
+                        : reachable
+                          ? "w-1.5 cursor-pointer bg-cream/45 hover:bg-cream/80"
+                          : "w-1.5 bg-cream/20"
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          )}
+
           <p
             aria-live="polite"
-            className={`mt-4 text-[10px] tracking-[0.14em] uppercase transition-colors sm:mt-5 sm:text-xs sm:tracking-[0.18em] ${
-              status === "done"
+            className={`mt-3 text-[10px] tracking-[0.14em] uppercase transition-colors sm:mt-4 sm:text-xs sm:tracking-[0.18em] ${
+              joined
                 ? "text-gold"
                 : status === "error"
                   ? "text-ember"
                   : "text-cream/50"
             }`}
           >
-            {STATUS_MESSAGE[status]}
+            <span key={statusMessage} className="status-swap">
+              {statusMessage}
+            </span>
           </p>
         </div>
       </div>

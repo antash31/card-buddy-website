@@ -245,6 +245,22 @@ body {
   margin-top: clamp(0.65rem, 2.1svh, 1.6rem);
 }
 
+.status-swap {
+  display: inline-block;
+  animation: status-in 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes status-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* Entrance helpers */
 
 .rise {
@@ -341,6 +357,7 @@ body {
   .chip-float-a,
   .chip-float-b,
   .shine,
+  .status-swap,
   .rise,
   .art-left,
   .art-card,

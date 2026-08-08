@@ -162,6 +162,8 @@ const CurvedInput = ({
   showButton = true,
   showIcon = true,
   icon,
+  contentKey,
+  swapFrom = 'right',
   className = '',
   style
 }) => {
@@ -386,54 +388,62 @@ const CurvedInput = ({
 
         <path id={layoutPathId} d={layoutPath} fill="none" />
 
-        {showIcon && (
-          <g transform={`translate(${round2(ix)} ${round2(iy)}) rotate(${round2(iconAngle)})`} aria-hidden="true">
-            {icon || (
-              <>
-                <rect x={-chipW / 2} y={-chipH / 2} width={chipW} height={chipH} rx={chipH * 0.27} fill={chipFill} />
-                <rect
-                  x={-ew / 2}
-                  y={-eh / 2}
-                  width={ew}
-                  height={eh}
-                  rx={1.4}
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth={sw}
-                  strokeLinejoin="round"
-                />
-                <path
-                  d={`M ${round2(-ew / 2)} ${round2(-eh / 2 + sw * 0.4)} L 0 ${round2(eh * 0.14)} L ${round2(ew / 2)} ${round2(-eh / 2 + sw * 0.4)}`}
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth={sw}
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-              </>
-            )}
-          </g>
-        )}
-
-        <g clipPath={`url(#${clipId})`}>
-          <text ref={textRef} style={{ fontSize: `${fontSize}px`, fontWeight: 500 }} fill={fgColor} xmlSpace="preserve" aria-hidden="true">
-            <textPath href={`#${layoutPathId}`}>{display}</textPath>
-          </text>
-          {!display && placeholder && (
-            <text style={{ fontSize: `${fontSize}px`, fontWeight: 500 }} fill={phColor} xmlSpace="preserve" aria-hidden="true">
-              <textPath href={`#${layoutPathId}`}>{placeholder}</textPath>
-            </text>
-          )}
-          {focused && (
-            <g
-              key={`${display}-${Math.min(caretIndex, display.length)}`}
-              transform={`translate(${round2(caretX)} ${round2(caretY)}) rotate(${round2(caretAngle)})`}
-            >
-              <line y1={-caretH / 2} y2={caretH / 2} stroke={fgColor} strokeWidth="1.5" strokeLinecap="round">
-                <animate attributeName="opacity" values="1;0" dur="1.06s" calcMode="discrete" repeatCount="indefinite" />
-              </line>
+        {/* Remounting on contentKey replays the swap animation, and the wrapper
+            carries no transform attribute for the CSS animation to fight. */}
+        <g
+          key={contentKey}
+          className="curved-input__content"
+          style={{ '--ci-swap-x': swapFrom === 'left' ? '-14px' : '14px' }}
+        >
+          {showIcon && (
+            <g transform={`translate(${round2(ix)} ${round2(iy)}) rotate(${round2(iconAngle)})`} aria-hidden="true">
+                {icon || (
+                  <>
+                    <rect x={-chipW / 2} y={-chipH / 2} width={chipW} height={chipH} rx={chipH * 0.27} fill={chipFill} />
+                    <rect
+                      x={-ew / 2}
+                      y={-eh / 2}
+                      width={ew}
+                      height={eh}
+                      rx={1.4}
+                      fill="none"
+                      stroke="#ffffff"
+                      strokeWidth={sw}
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d={`M ${round2(-ew / 2)} ${round2(-eh / 2 + sw * 0.4)} L 0 ${round2(eh * 0.14)} L ${round2(ew / 2)} ${round2(-eh / 2 + sw * 0.4)}`}
+                      fill="none"
+                      stroke="#ffffff"
+                      strokeWidth={sw}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                    />
+                  </>
+                )}
             </g>
           )}
+
+          <g clipPath={`url(#${clipId})`}>
+            <text ref={textRef} style={{ fontSize: `${fontSize}px`, fontWeight: 500 }} fill={fgColor} xmlSpace="preserve" aria-hidden="true">
+              <textPath href={`#${layoutPathId}`}>{display}</textPath>
+            </text>
+            {!display && placeholder && (
+              <text style={{ fontSize: `${fontSize}px`, fontWeight: 500 }} fill={phColor} xmlSpace="preserve" aria-hidden="true">
+                <textPath href={`#${layoutPathId}`}>{placeholder}</textPath>
+              </text>
+            )}
+            {focused && (
+              <g
+                key={`${display}-${Math.min(caretIndex, display.length)}`}
+                transform={`translate(${round2(caretX)} ${round2(caretY)}) rotate(${round2(caretAngle)})`}
+              >
+                <line y1={-caretH / 2} y2={caretH / 2} stroke={fgColor} strokeWidth="1.5" strokeLinecap="round">
+                  <animate attributeName="opacity" values="1;0" dur="1.06s" calcMode="discrete" repeatCount="indefinite" />
+                </line>
+              </g>
+            )}
+          </g>
         </g>
 
         {showButton && (
@@ -457,6 +467,8 @@ const CurvedInput = ({
             <path className="curved-input__button-bg" d={buttonPath} fill={accentColor} />
             <path id={buttonPathId} d={buttonTextPath} fill="none" />
             <text
+              key={buttonText}
+              className="curved-input__button-label"
               fill={btnFgColor}
               textAnchor="middle"
               style={{ fontSize: `${fontSize}px`, fontWeight: 600, pointerEvents: 'none' }}
