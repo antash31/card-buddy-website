@@ -141,40 +141,27 @@ body {
 }
 
 /*
- * The art is a 3.2:1 band, so at phone widths it would shrink to a sliver.
- * Overscaling it lets the hands bleed past both edges and keeps the card
- * itself legible; the scale relaxes back to 100% once there is room.
+ * The hero never scrolls, so the art is sized from the viewport height and
+ * its width follows the 3.2:1 ratio. On phones that makes it wider than the
+ * screen, which is the point: the hands bleed off both edges and the card
+ * stays large enough to read.
  */
 .art-scale {
-  width: 180%;
-  margin-inline-start: -40%;
-}
-
-@media (min-width: 480px) {
-  .art-scale {
-    width: 160%;
-    margin-inline-start: -30%;
-  }
+  --art-h: clamp(130px, 30svh, 230px);
+  height: var(--art-h);
+  width: calc(var(--art-h) * 1888 / 588);
+  flex: none;
 }
 
 @media (min-width: 640px) {
   .art-scale {
-    width: 138%;
-    margin-inline-start: -19%;
-  }
-}
-
-@media (min-width: 768px) {
-  .art-scale {
-    width: 118%;
-    margin-inline-start: -9%;
+    --art-h: clamp(150px, 32svh, 300px);
   }
 }
 
 @media (min-width: 1024px) {
   .art-scale {
-    width: 100%;
-    margin-inline-start: 0;
+    --art-h: min(36svh, 368px);
   }
 }
 
@@ -251,6 +238,11 @@ body {
   animation: spark 3.4s ease-in-out 1.6s infinite both;
   pointer-events: none;
   z-index: 3;
+}
+
+/* Vertical rhythm that compresses on short viewports so nothing overflows */
+.hero-stack > * + * {
+  margin-top: clamp(0.65rem, 2.1svh, 1.6rem);
 }
 
 /* Entrance helpers */
@@ -341,16 +333,6 @@ body {
   to { background-position: -220% 0; }
 }
 
-@keyframes scroll-cue {
-  0% { transform: translateY(-40%); opacity: 0; }
-  40% { opacity: 1; }
-  100% { transform: translateY(120%); opacity: 0; }
-}
-
-.scroll-dot {
-  animation: scroll-cue 2.2s ease-in-out infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .hero-grain,
   .hero-halo,
@@ -359,7 +341,6 @@ body {
   .chip-float-a,
   .chip-float-b,
   .shine,
-  .scroll-dot,
   .rise,
   .art-left,
   .art-card,
