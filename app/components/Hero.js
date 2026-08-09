@@ -160,7 +160,7 @@ export default function Hero() {
       <div className="hero-vignette" aria-hidden="true" />
       <div className="hero-grain" aria-hidden="true" />
 
-      <header className="rise rise-1 relative z-20 mx-auto flex w-full max-w-7xl shrink-0 items-center justify-between gap-3 px-5 py-4 sm:px-10 sm:py-6">
+      <header className="rise rise-1 relative z-20 mx-auto flex w-full max-w-7xl shrink-0 items-center px-5 py-4 sm:px-10 sm:py-6">
         <a href="#" className="flex items-center gap-2.5 sm:gap-3">
           <span className="grid h-8 w-8 place-items-center rounded-lg border border-cream/25 bg-cream/10 font-display text-base text-cream backdrop-blur-sm sm:h-9 sm:w-9 sm:rounded-xl sm:text-lg">
             C
@@ -170,11 +170,6 @@ export default function Hero() {
           </span>
         </a>
 
-        <nav className="hidden items-center gap-9 text-sm text-cream/70 md:flex">
-          <a className="transition-colors hover:text-cream" href="#">How it works</a>
-          <a className="transition-colors hover:text-cream" href="#">Rewards</a>
-          <a className="transition-colors hover:text-cream" href="#">Security</a>
-        </nav>
       </header>
 
       <div className="hero-stack relative z-10 mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col items-center justify-center px-5 text-center sm:px-6">
